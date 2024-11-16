@@ -1,5 +1,5 @@
 package com.example.evertecdemo.models;
 
-public class EstadoPedido {
-    
+public enum EstadoPedido {
+    PENDIENTE, ENVIADO, ENTREGADO, CANCELADO
 }

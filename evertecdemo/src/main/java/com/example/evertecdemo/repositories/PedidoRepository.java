@@ -1,5 +1,12 @@
 package com.example.evertecdemo.repositories;
 
-public class PedidoRepository {
-    
+import com.example.evertecdemo.models.Pedido;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {
+    List<Pedido> findByClienteId(Long clienteId);
 }

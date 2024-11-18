@@ -11,6 +11,8 @@ import com.example.evertecdemo.repositories.PedidoRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.ValidationException;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,9 @@ public class ClienteService {
     }
 
     public ClienteDTO registrarCliente(ClienteDTO clienteDTO) {
+        if (clienteRepository.existsByEmail((clienteDTO.getEmail()))) {
+            throw new ValidationException("El correo electrónico ya existe");
+        }
         Cliente cliente = new Cliente();
         cliente.setNombre(clienteDTO.getNombre());
         cliente.setEmail(clienteDTO.getEmail());
@@ -50,10 +55,9 @@ public class ClienteService {
     }
 
     public List<ClienteDTO> obtenerCliente() {
-        List<Cliente> clientes = clienteRepository.findAll(); // Obtener la lista de clientes
-        // Convertir cada Cliente a ClienteDTO usando un stream
+        List<Cliente> clientes = clienteRepository.findAll();
         return clientes.stream()
-                .map(this::convertirAClienteDTO) // Llama al método de conversión
+                .map(this::convertirAClienteDTO)
                 .collect(Collectors.toList());
     }
 
@@ -65,9 +69,10 @@ public class ClienteService {
     public void eliminarCliente(Long id) {
         List<Pedido> pedidosPendientes = pedidoRepository.findByClienteIdAndEstado(id, EstadoPedido.PENDIENTE);
         List<Pedido> pedidosEnviados = pedidoRepository.findByClienteIdAndEstado(id, EstadoPedido.ENVIADO);
-    
+
         if (!pedidosPendientes.isEmpty() || !pedidosEnviados.isEmpty()) {
-            throw new RecursoNoEncontradoException("No se puede eliminar el cliente. Tiene pedidos pendientes o enviados.");
+            throw new RecursoNoEncontradoException(
+                    "No se puede eliminar el cliente. Tiene pedidos pendientes o enviados.");
         }
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));

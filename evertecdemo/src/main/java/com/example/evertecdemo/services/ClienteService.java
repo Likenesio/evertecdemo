@@ -64,9 +64,10 @@ public class ClienteService {
 
     public void eliminarCliente(Long id) {
         List<Pedido> pedidosPendientes = pedidoRepository.findByClienteIdAndEstado(id, EstadoPedido.PENDIENTE);
-
-        if (!pedidosPendientes.isEmpty()) {
-            throw new RecursoNoEncontradoException("No se puede eliminar el cliente. Tiene pedidos pendientes.");
+        List<Pedido> pedidosEnviados = pedidoRepository.findByClienteIdAndEstado(id, EstadoPedido.ENVIADO);
+    
+        if (!pedidosPendientes.isEmpty() || !pedidosEnviados.isEmpty()) {
+            throw new RecursoNoEncontradoException("No se puede eliminar el cliente. Tiene pedidos pendientes o enviados.");
         }
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));

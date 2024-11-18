@@ -3,6 +3,7 @@ package com.example.evertecdemo.models;
 import jakarta.persistence.*;
 
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "cliente") // nombre de nuestra tabla
@@ -12,15 +13,17 @@ public class Cliente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false) // id unica, inclemental y no null
     private Long id;
+    @NotNull
     private String nombre;
+    @NotNull
     private String apellido;
-    private String direccion;
-    private String comuna;
+    @NotNull
     private String telefono;
-
-    @Column(unique = true) // El email debe ser único
+    @Column(unique = true)
+    @NotNull
     private String email;
-
+    
+    @NotNull
     private String password;
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -29,16 +32,13 @@ public class Cliente {
     public Cliente() {
     }
 
-    public Cliente(Long id, String nombre, String email, String password, String apellido, String direccion,
-            String comuna, String telefono, List<Pedido> pedidos) {
+    public Cliente(Long id, String nombre, String email, String password, String apellido, String telefono, List<Pedido> pedidos) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.password = password;
         this.telefono = telefono;
         this.apellido = apellido;
-        this.direccion = direccion;
-        this.comuna = comuna;
         this.pedidos = pedidos;
     }
 
@@ -80,22 +80,6 @@ public class Cliente {
 
     public void setApellido(String apellido) {
         this.apellido = apellido;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getComuna() {
-        return comuna;
-    }
-
-    public void setComuna(String comuna) {
-        this.comuna = comuna;
     }
 
     public String getTelefono() {

@@ -10,7 +10,7 @@ import com.example.evertecdemo.services.PedidoService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pedidos")
+@RequestMapping("/api/pedido")
 public class PedidoController {
 
     private final PedidoService pedidoService;
@@ -44,14 +44,14 @@ public class PedidoController {
     }
 
     // Endpoint para cancelar un pedido
-    @DeleteMapping("/cancelar/{id}")
+    @DeleteMapping("/{id}/cancelar")
     public ResponseEntity<String> cancelarPedido(@PathVariable Long id) {
         pedidoService.cancelarPedido(id);
         return ResponseEntity.ok("Pedido cancelado exitosamente.");
     }
 
     // Endpoint para listar todos los pedidos
-    @GetMapping("/todos")
+    @GetMapping("/listar/todos")
     public ResponseEntity<List<PedidoDTO>> listarTodosLosPedidos() {
         List<PedidoDTO> pedidos = pedidoService.listarTodosLosPedidos();
         return new ResponseEntity<>(pedidos, HttpStatus.OK);

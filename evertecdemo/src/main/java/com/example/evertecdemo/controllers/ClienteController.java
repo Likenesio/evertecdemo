@@ -9,7 +9,7 @@ import com.example.evertecdemo.dto.ClienteDTO;
 import com.example.evertecdemo.services.ClienteService;
 
 @RestController
-@RequestMapping("/api/clientes")
+@RequestMapping("/api/cliente")
 public class ClienteController {
 
     private final ClienteService clienteService;

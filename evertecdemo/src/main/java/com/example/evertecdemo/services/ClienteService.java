@@ -31,21 +31,23 @@ public class ClienteService {
     }
 
     public ClienteDTO registrarCliente(ClienteDTO clienteDTO) {
-        if (clienteRepository.existsByEmail((clienteDTO.getEmail()))) {
-            throw new ValidationException("El correo electrónico ya existe");
-        }
+
         Cliente cliente = new Cliente();
         cliente.setNombre(clienteDTO.getNombre());
         cliente.setEmail(clienteDTO.getEmail());
         cliente.setApellido(clienteDTO.getApellido());
         cliente.setTelefono(clienteDTO.getTelefono());
-        cliente.setDireccion(clienteDTO.getDireccion());
-        cliente.setComuna(clienteDTO.getComuna());
         cliente.setPassword(passwordEncoder.encode(clienteDTO.getPassword()));
 
+        if (clienteDTO.getEmail() == null || clienteDTO.getEmail().isEmpty() || clienteDTO.getEmail().isBlank()) {
+            throw new IllegalArgumentException("El email no puede estar vacio");
+        }
+        if (clienteRepository.existsByEmail((clienteDTO.getEmail()))) {
+            throw new ValidationException("El correo electrónico ya existe");
+        }
         clienteRepository.save(cliente);
         return new ClienteDTO(cliente.getId(), cliente.getNombre(), cliente.getEmail(), cliente.getPassword(),
-                cliente.getTelefono(), cliente.getDireccion(), cliente.getComuna(), cliente.getApellido());
+                cliente.getTelefono(), cliente.getApellido());
     }
 
     public boolean autenticarCliente(String email, String password) {
@@ -63,7 +65,7 @@ public class ClienteService {
 
     private ClienteDTO convertirAClienteDTO(Cliente cliente) {
         return new ClienteDTO(cliente.getId(), cliente.getNombre(), cliente.getEmail(), cliente.getPassword(),
-                cliente.getTelefono(), cliente.getDireccion(), cliente.getComuna(), cliente.getApellido());
+                cliente.getTelefono(), cliente.getApellido());
     }
 
     public void eliminarCliente(Long id) {

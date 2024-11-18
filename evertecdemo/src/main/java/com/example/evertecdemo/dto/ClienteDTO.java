@@ -5,24 +5,19 @@ public class ClienteDTO {
     private String nombre;
     private String email;
     private String password;
-    private String direccion;
     private String telefono;
-    private String comuna;
     private String apellido;
 
     public ClienteDTO() {
     }
 
-    public ClienteDTO(Long id, String nombre, String email, String password, String telefono, String direccion,
-            String apellido, String comuna) {
+    public ClienteDTO(Long id, String nombre, String email, String password, String telefono,String apellido) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.password = password;
         this.telefono = telefono;
         this.apellido = apellido;
-        this.direccion = direccion;
-        this.comuna = comuna;
     }
 
     public String getPassword() {
@@ -65,22 +60,6 @@ public class ClienteDTO {
         this.apellido = apellido;
     }
 
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getComuna() {
-        return comuna;
-    }
-
-    public void setComuna(String comuna) {
-        this.comuna = comuna;
-    }
-
     public String getTelefono() {
         return telefono;
     }
@@ -97,8 +76,6 @@ public class ClienteDTO {
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", apellido='" + apellido + '\'' +
-                ", direccion='" + direccion + '\'' +
-                ", comuna='" + comuna + '\'' +
                 ", telefono='" + telefono + '\'' +
                 '}';
     }

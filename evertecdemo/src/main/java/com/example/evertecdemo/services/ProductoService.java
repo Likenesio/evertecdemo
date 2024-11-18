@@ -43,7 +43,7 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
-    public ProductoDTO obtenerProducto(Long id) {
+    public ProductoDTO obtenerProductoPorId(Long id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con id: " + id));
         return new ProductoDTO(producto.getId(), producto.getNombre(), producto.getPrecio(), producto.getDescripcion(),

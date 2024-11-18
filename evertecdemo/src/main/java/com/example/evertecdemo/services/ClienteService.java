@@ -3,7 +3,10 @@ package com.example.evertecdemo.services;
 import com.example.evertecdemo.dto.ClienteDTO;
 import com.example.evertecdemo.exceptions.RecursoNoEncontradoException;
 import com.example.evertecdemo.models.Cliente;
+import com.example.evertecdemo.models.EstadoPedido;
+import com.example.evertecdemo.models.Pedido;
 import com.example.evertecdemo.repositories.ClienteRepository;
+import com.example.evertecdemo.repositories.PedidoRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,10 +19,13 @@ public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PedidoRepository pedidoRepository;
 
-    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder) {
+    public ClienteService(ClienteRepository clienteRepository, PedidoRepository pedidoRepository,
+            PasswordEncoder passwordEncoder) {
         this.clienteRepository = clienteRepository;
         this.passwordEncoder = passwordEncoder;
+        this.pedidoRepository = pedidoRepository;
     }
 
     public ClienteDTO registrarCliente(ClienteDTO clienteDTO) {
@@ -54,5 +60,16 @@ public class ClienteService {
     private ClienteDTO convertirAClienteDTO(Cliente cliente) {
         return new ClienteDTO(cliente.getId(), cliente.getNombre(), cliente.getEmail(), cliente.getPassword(),
                 cliente.getTelefono(), cliente.getDireccion(), cliente.getComuna(), cliente.getApellido());
+    }
+
+    public void eliminarCliente(Long id) {
+        List<Pedido> pedidosPendientes = pedidoRepository.findByClienteIdAndEstado(id, EstadoPedido.PENDIENTE);
+
+        if (!pedidosPendientes.isEmpty()) {
+            throw new RecursoNoEncontradoException("No se puede eliminar el cliente. Tiene pedidos pendientes.");
+        }
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
+        clienteRepository.delete(cliente);
     }
 }

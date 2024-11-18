@@ -35,9 +35,16 @@ public class ClienteController {
             return new ResponseEntity<>("Credenciales incorrectas", HttpStatus.UNAUTHORIZED);
         }
     }
-    //End Point para Listar todos los clientes
+
+    // End Point para Listar todos los clientes
     @GetMapping("/listar")
     public List<ClienteDTO> obtenerCliente() {
-    return clienteService.obtenerCliente();
-}
+        return clienteService.obtenerCliente();
+    }
+
+    @DeleteMapping("/eliminar/{id}")
+    public ResponseEntity<String> eliminarCliente(@PathVariable Long id) {
+        clienteService.eliminarCliente(id);
+        return ResponseEntity.ok("Cliente eliminado exitosamente");
+    }
 }

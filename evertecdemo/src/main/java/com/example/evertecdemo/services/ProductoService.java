@@ -28,10 +28,8 @@ public class ProductoService {
         producto.setDescripcion(productoDTO.getDescripcion());
         producto.setCategoria(productoDTO.getCategoria());
 
-        // Guardar el producto en la base de datos
         productoRepository.save(producto);
 
-        // Retornar el producto creado como DTO
         return new ProductoDTO(producto.getId(), producto.getNombre(), producto.getPrecio(), producto.getDescripcion(),
                 producto.getStock(), producto.getCategoria());
     }

@@ -33,7 +33,6 @@ public class PedidoService {
         this.productoRepository = productoRepository;
     }
 
-    // Método para crear un nuevo pedido
     public PedidoDTO crearPedido(PedidoDTO pedidoDTO) {
         validarPedidoDTO(pedidoDTO);
 
@@ -82,7 +81,6 @@ public class PedidoService {
                 totalPedido);
     }
 
-    // Método para obtener un pedido por ID
     public PedidoDTO obtenerPedido(Long id) {
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -90,7 +88,6 @@ public class PedidoService {
         return crearPedidoDTOCompleto(pedido);
     }
 
-    // Método para listar todos los pedidos de un cliente
     public List<PedidoDTO> listarPedidosCliente(Long clienteId) {
         clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -101,7 +98,6 @@ public class PedidoService {
                 .collect(Collectors.toList());
     }
 
-    // Método para actualizar el estado de un pedido
     @Transactional
     public PedidoDTO actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
         Pedido pedido = pedidoRepository.findById(id)
@@ -114,7 +110,6 @@ public class PedidoService {
         return crearPedidoDTOCompleto(pedido);
     }
 
-    // Método para cancelar un pedido
     @Transactional
     public void cancelarPedido(Long id) {
         Pedido pedido = pedidoRepository.findById(id)
@@ -129,7 +124,6 @@ public class PedidoService {
         pedidoRepository.save(pedido);
     }
 
-    // Método para listar todos los pedidos
     public List<PedidoDTO> listarTodosLosPedidos() {
         List<Pedido> pedidos = pedidoRepository.findAll();
 
@@ -142,13 +136,12 @@ public class PedidoService {
                 .collect(Collectors.toList());
     }
 
-    // Método auxiliar para crear un PedidoDTO completo
     private PedidoDTO crearPedidoDTOCompleto(Pedido pedido) {
         List<ProductoPedidoDTO> productosDTO = new ArrayList<>();
         double totalPedido = 0.0;
 
         for (Producto producto : pedido.getProductos()) {
-            // Por defecto asumimos cantidad 1, podrías mantener la cantidad en una tabla separada
+
             int cantidad = 1;
             double subtotal = producto.getPrecio() * cantidad;
             totalPedido += subtotal;

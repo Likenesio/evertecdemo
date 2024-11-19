@@ -20,32 +20,31 @@ public class PedidoController {
     public PedidoController(PedidoService pedidoService) {
         this.pedidoService = pedidoService;
     }
-    
-    //Endpoint para crear un pedido
+
     @PostMapping("/nuevo")
     public ResponseEntity<PedidoDTO> crearPedido(@RequestBody PedidoDTO pedidoDTO) {
         PedidoDTO nuevoPedido = pedidoService.crearPedido(pedidoDTO);
         return new ResponseEntity<>(nuevoPedido, HttpStatus.CREATED);
     }
-    //Endpoint para detalle de todos los pedidos
+
     @GetMapping("/listar")
     public ResponseEntity<List<PedidoDTO>> listarTodosLosPedidos() {
         List<PedidoDTO> pedidos = pedidoService.listarTodosLosPedidos();
         return ResponseEntity.ok(pedidos);
     }
-    //Endpoint para detalle pedido por id
+
     @GetMapping("/{id}/detalle")
     public ResponseEntity<PedidoDTO> obtenerPedido(@PathVariable Long id) {
         PedidoDTO pedido = pedidoService.obtenerPedido(id);
         return ResponseEntity.ok(pedido);
     }
-    //Endpoint para ver los pedidos de un cliente
+
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<List<PedidoDTO>> listarPedidosCliente(@PathVariable Long clienteId) {
         List<PedidoDTO> pedidos = pedidoService.listarPedidosCliente(clienteId);
         return ResponseEntity.ok(pedidos);
     }
-    //Endpoint para cambiar estado de un pedido
+
     @PatchMapping("/{id}/estado")
     public ResponseEntity<PedidoDTO> actualizarEstadoPedido(
             @PathVariable Long id,
@@ -58,7 +57,7 @@ public class PedidoController {
             return ResponseEntity.badRequest().build();
         }
     }
-    //Endpoint para cancelar pedidos
+
     @DeleteMapping("/{id}/cancelar")
     public ResponseEntity<Void> cancelarPedido(@PathVariable Long id) {
         pedidoService.cancelarPedido(id);

@@ -31,7 +31,17 @@ public class ClienteService {
     }
 
     public ClienteDTO registrarCliente(ClienteDTO clienteDTO) {
-
+        if (clienteDTO.getEmail() == null || clienteDTO.getEmail().isEmpty() || clienteDTO.getEmail().isBlank()) {
+            throw new IllegalArgumentException("El email no puede estar vacío");
+        }
+        if (clienteRepository.existsByEmail(clienteDTO.getEmail())) {
+            throw new ValidationException("El correo electrónico ya existe");
+        }
+        if (clienteDTO.getPassword() == null || clienteDTO.getPassword().isEmpty()
+                || clienteDTO.getPassword().isBlank()) {
+            System.out.println("La contraseña es nula o vacía");
+            throw new IllegalArgumentException("La contraseña no puede ser nula ni vacía");
+        }
         Cliente cliente = new Cliente();
         cliente.setNombre(clienteDTO.getNombre());
         cliente.setEmail(clienteDTO.getEmail());
@@ -39,13 +49,8 @@ public class ClienteService {
         cliente.setTelefono(clienteDTO.getTelefono());
         cliente.setPassword(passwordEncoder.encode(clienteDTO.getPassword()));
 
-        if (clienteDTO.getEmail() == null || clienteDTO.getEmail().isEmpty() || clienteDTO.getEmail().isBlank()) {
-            throw new IllegalArgumentException("El email no puede estar vacio");
-        }
-        if (clienteRepository.existsByEmail((clienteDTO.getEmail()))) {
-            throw new ValidationException("El correo electrónico ya existe");
-        }
         clienteRepository.save(cliente);
+
         return new ClienteDTO(cliente.getId(), cliente.getNombre(), cliente.getEmail(), cliente.getPassword(),
                 cliente.getTelefono(), cliente.getApellido());
     }

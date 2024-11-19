@@ -1,16 +1,18 @@
 package com.example.evertecdemo.controllers;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import com.example.evertecdemo.dto.PedidoDTO;
 import com.example.evertecdemo.models.EstadoPedido;
 import com.example.evertecdemo.services.PedidoService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pedido")
+@CrossOrigin(origins = "*")
 public class PedidoController {
 
     private final PedidoService pedidoService;
@@ -18,57 +20,48 @@ public class PedidoController {
     public PedidoController(PedidoService pedidoService) {
         this.pedidoService = pedidoService;
     }
-
-    // Endpoint para crear un nuevo pedido
+    
+    //Endpoint para crear un pedido
     @PostMapping("/nuevo")
     public ResponseEntity<PedidoDTO> crearPedido(@RequestBody PedidoDTO pedidoDTO) {
         PedidoDTO nuevoPedido = pedidoService.crearPedido(pedidoDTO);
         return new ResponseEntity<>(nuevoPedido, HttpStatus.CREATED);
     }
-
-    // Endpoint para listar todos los pedidos de un cliente específico
+    //Endpoint para detalle de todos los pedidos
+    @GetMapping("/listar")
+    public ResponseEntity<List<PedidoDTO>> listarTodosLosPedidos() {
+        List<PedidoDTO> pedidos = pedidoService.listarTodosLosPedidos();
+        return ResponseEntity.ok(pedidos);
+    }
+    //Endpoint para detalle pedido por id
+    @GetMapping("/{id}/detalle")
+    public ResponseEntity<PedidoDTO> obtenerPedido(@PathVariable Long id) {
+        PedidoDTO pedido = pedidoService.obtenerPedido(id);
+        return ResponseEntity.ok(pedido);
+    }
+    //Endpoint para ver los pedidos de un cliente
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<List<PedidoDTO>> listarPedidosCliente(@PathVariable Long clienteId) {
         List<PedidoDTO> pedidos = pedidoService.listarPedidosCliente(clienteId);
-        return new ResponseEntity<>(pedidos, HttpStatus.OK);
+        return ResponseEntity.ok(pedidos);
     }
-
-    // Endpoint para actualizar el estado de un pedido con path
+    //Endpoint para cambiar estado de un pedido
     @PatchMapping("/{id}/estado")
     public ResponseEntity<PedidoDTO> actualizarEstadoPedido(
             @PathVariable Long id,
-            @RequestParam EstadoPedido estado) {
-
-        PedidoDTO pedidoActualizado = pedidoService.actualizarEstadoPedido(id, estado);
-        return new ResponseEntity<>(pedidoActualizado, HttpStatus.OK);
+            @RequestBody Map<String, String> estado) {
+        try {
+            EstadoPedido nuevoEstado = EstadoPedido.valueOf(estado.get("estado").toUpperCase());
+            PedidoDTO pedidoActualizado = pedidoService.actualizarEstadoPedido(id, nuevoEstado);
+            return ResponseEntity.ok(pedidoActualizado);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
-
-    // Endpoint para cancelar un pedido
+    //Endpoint para cancelar pedidos
     @DeleteMapping("/{id}/cancelar")
-    public ResponseEntity<String> cancelarPedido(@PathVariable Long id) {
+    public ResponseEntity<Void> cancelarPedido(@PathVariable Long id) {
         pedidoService.cancelarPedido(id);
-        return ResponseEntity.ok("Pedido cancelado exitosamente.");
+        return ResponseEntity.noContent().build();
     }
-
-    // Endpoint para listar todos los pedidos
-    @GetMapping("/listar/todos")
-    public ResponseEntity<List<PedidoDTO>> listarTodosLosPedidos() {
-        List<PedidoDTO> pedidos = pedidoService.listarTodosLosPedidos();
-        return new ResponseEntity<>(pedidos, HttpStatus.OK);
-    }
-
-    // Endpoint para ver el detalle de un pedido
-    @GetMapping("/detalle/{id}")
-    public ResponseEntity<PedidoDTO> verDetallePedido(@PathVariable Long id) {
-        PedidoDTO pedido = pedidoService.verDetallePedido(id);
-        return new ResponseEntity<>(pedido, HttpStatus.OK);
-    }
-
-    // Endpoint para obtener un pedido por su ID
-    @GetMapping("/listar/{id}")
-    public ResponseEntity<PedidoDTO> obtenerPedido(@PathVariable Long id) {
-        PedidoDTO pedido = pedidoService.obtenerPedido(id);
-        return new ResponseEntity<>(pedido, HttpStatus.OK);
-    }
-
 }

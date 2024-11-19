@@ -1,6 +1,7 @@
 package com.example.evertecdemo.services;
 
 import com.example.evertecdemo.dto.PedidoDTO;
+import com.example.evertecdemo.dto.PedidoDTO.ProductoPedidoDTO;
 import com.example.evertecdemo.exceptions.RecursoNoEncontradoException;
 import com.example.evertecdemo.models.Cliente;
 import com.example.evertecdemo.models.EstadoPedido;
@@ -14,144 +15,173 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class PedidoService {
 
-        private final PedidoRepository pedidoRepository;
-        private final ClienteRepository clienteRepository;
-        private final ProductoRepository productoRepository;
+    private final PedidoRepository pedidoRepository;
+    private final ClienteRepository clienteRepository;
+    private final ProductoRepository productoRepository;
 
-        public PedidoService(PedidoRepository pedidoRepository, ClienteRepository clienteRepository,
-                        ProductoRepository productoRepository) {
-                this.pedidoRepository = pedidoRepository;
-                this.clienteRepository = clienteRepository;
-                this.productoRepository = productoRepository;
+    public PedidoService(PedidoRepository pedidoRepository, ClienteRepository clienteRepository,
+            ProductoRepository productoRepository) {
+        this.pedidoRepository = pedidoRepository;
+        this.clienteRepository = clienteRepository;
+        this.productoRepository = productoRepository;
+    }
+
+    // Método para crear un nuevo pedido
+    public PedidoDTO crearPedido(PedidoDTO pedidoDTO) {
+        validarPedidoDTO(pedidoDTO);
+
+        Cliente cliente = clienteRepository.findById(pedidoDTO.getClienteId())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Cliente no encontrado con id: " + pedidoDTO.getClienteId()));
+
+        List<ProductoPedidoDTO> productosConDetalles = new ArrayList<>();
+        double totalPedido = 0.0;
+
+        // Crear el pedido
+        Pedido pedido = new Pedido();
+        pedido.setCliente(cliente);
+        pedido.setEstado(EstadoPedido.PENDIENTE);
+        pedido.setFecha(LocalDate.now());
+
+        // Procesar cada producto
+        List<Producto> productos = new ArrayList<>();
+        for (ProductoPedidoDTO productoDTO : pedidoDTO.getProductos()) {
+            Producto producto = productoRepository.findById(productoDTO.getProductoId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "Producto no encontrado con id: " + productoDTO.getProductoId()));
+
+            productos.add(producto);
+
+            double subtotal = producto.getPrecio() * productoDTO.getCantidad();
+            totalPedido += subtotal;
+
+            productosConDetalles.add(new ProductoPedidoDTO(
+                    producto.getId(),
+                    producto.getNombre(),
+                    producto.getPrecio(),
+                    productoDTO.getCantidad()));
         }
 
-        // Método para crear un nuevo pedido
-        public PedidoDTO crearPedido(PedidoDTO pedidoDTO) {
-                validarPedidoDTO(pedidoDTO);
+        pedido.setProductos(productos);
+        Pedido pedidoGuardado = pedidoRepository.save(pedido);
 
-                Cliente cliente = clienteRepository.findById(pedidoDTO.getClienteId())
-                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                                "Cliente no encontrado con id: " + pedidoDTO.getClienteId()));
+        return new PedidoDTO(
+                pedidoGuardado.getId(),
+                cliente.getId(),
+                cliente.getNombre(),
+                pedidoGuardado.getEstado().toString(),
+                pedidoGuardado.getFecha(),
+                productosConDetalles,
+                totalPedido);
+    }
 
-                // Mapeo de productos del pedido
-                List<Producto> productos = pedidoDTO.getProductosIds().stream()
-                                .map(id -> productoRepository.findById(id)
-                                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                                                "Producto no encontrado con id: " + id)))
-                                .collect(Collectors.toList());
+    // Método para obtener un pedido por ID
+    public PedidoDTO obtenerPedido(Long id) {
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Pedido no encontrado con id: " + id));
+        return crearPedidoDTOCompleto(pedido);
+    }
 
-                Pedido pedido = new Pedido();
-                pedido.setCliente(cliente);
-                pedido.setProductos(productos);
-                pedido.setEstado(EstadoPedido.PENDIENTE);
-                pedido.setFecha(LocalDate.now());
+    // Método para listar todos los pedidos de un cliente
+    public List<PedidoDTO> listarPedidosCliente(Long clienteId) {
+        clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Cliente no encontrado con id: " + clienteId));
 
-                pedidoRepository.save(pedido);
+        return pedidoRepository.findByClienteId(clienteId).stream()
+                .map(this::crearPedidoDTOCompleto)
+                .collect(Collectors.toList());
+    }
 
-                return mapearAPedidoDTO(pedido);
+    // Método para actualizar el estado de un pedido
+    @Transactional
+    public PedidoDTO actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Pedido no encontrado con id: " + id));
+
+        pedido.setEstado(nuevoEstado);
+        pedidoRepository.save(pedido);
+
+        return crearPedidoDTOCompleto(pedido);
+    }
+
+    // Método para cancelar un pedido
+    @Transactional
+    public void cancelarPedido(Long id) {
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Pedido " + id + " no existe"));
+
+        if (!pedido.getEstado().equals(EstadoPedido.PENDIENTE)) {
+            throw new IllegalArgumentException("Solo se pueden cancelar pedidos en estado PENDIENTE.");
         }
 
-        // Método para obtener un pedido por ID
-        public PedidoDTO obtenerPedido(Long id) {
-                Pedido pedido = pedidoRepository.findById(id)
-                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                                "Pedido no encontrado con id: " + id));
-                return mapearAPedidoDTO(pedido);
+        pedido.setEstado(EstadoPedido.CANCELADO);
+        pedidoRepository.save(pedido);
+    }
+
+    // Método para listar todos los pedidos
+    public List<PedidoDTO> listarTodosLosPedidos() {
+        List<Pedido> pedidos = pedidoRepository.findAll();
+
+        if (pedidos.isEmpty()) {
+            throw new RecursoNoEncontradoException("No hay pedidos registrados.");
         }
 
-        // Método para listar todos los pedidos de un cliente
-        public List<PedidoDTO> listarPedidosCliente(Long clienteId) {
-                clienteRepository.findById(clienteId)
-                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                                "Cliente no encontrado con id: " + clienteId));
+        return pedidos.stream()
+                .map(this::crearPedidoDTOCompleto)
+                .collect(Collectors.toList());
+    }
 
-                return pedidoRepository.findByClienteId(clienteId).stream()
-                                .map(this::mapearAPedidoDTO)
-                                .collect(Collectors.toList());
+    // Método auxiliar para crear un PedidoDTO completo
+    private PedidoDTO crearPedidoDTOCompleto(Pedido pedido) {
+        List<ProductoPedidoDTO> productosDTO = new ArrayList<>();
+        double totalPedido = 0.0;
+
+        for (Producto producto : pedido.getProductos()) {
+            // Por defecto asumimos cantidad 1, podrías mantener la cantidad en una tabla separada
+            int cantidad = 1;
+            double subtotal = producto.getPrecio() * cantidad;
+            totalPedido += subtotal;
+
+            productosDTO.add(new ProductoPedidoDTO(
+                    producto.getId(),
+                    producto.getNombre(),
+                    producto.getPrecio(),
+                    cantidad));
         }
 
-        // Método para actualizar el estado de un pedido
-        @Transactional
-        public PedidoDTO actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
-                Pedido pedido = pedidoRepository.findById(id)
-                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                                "Pedido no encontrado con id: " + id));
+        return new PedidoDTO(
+                pedido.getId(),
+                pedido.getCliente().getId(),
+                pedido.getCliente().getNombre(),
+                pedido.getEstado().toString(),
+                pedido.getFecha(),
+                productosDTO,
+                totalPedido);
+    }
 
-                pedido.setEstado(nuevoEstado);
-                pedidoRepository.save(pedido);
-
-                return mapearAPedidoDTO(pedido);
+    // Método de validación para PedidoDTO
+    private void validarPedidoDTO(PedidoDTO pedidoDTO) {
+        if (pedidoDTO.getClienteId() == null) {
+            throw new IllegalArgumentException("El ID del cliente no puede ser nulo.");
         }
-
-        // Método para cancelar un pedido
-        @Transactional
-        public void cancelarPedido(Long id) {
-                Pedido pedido = pedidoRepository.findById(id)
-                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                                "Pedido no encontrado con id: " + id));
-
-                if (!pedido.getEstado().equals(EstadoPedido.PENDIENTE)) {
-                        throw new IllegalArgumentException("Solo se pueden cancelar pedidos en estado PENDIENTE.");
-                }
-
-                pedido.setEstado(EstadoPedido.CANCELADO);
-                pedidoRepository.save(pedido);
+        if (pedidoDTO.getProductos() == null || pedidoDTO.getProductos().isEmpty()) {
+            throw new IllegalArgumentException("Debe haber al menos un producto en el pedido.");
         }
-
-        // Método auxiliar para mapear Pedido a PedidoDTO
-        private PedidoDTO mapearAPedidoDTO(Pedido pedido) {
-                return new PedidoDTO(
-                                pedido.getId(),
-                                pedido.getCliente().getId(),
-                                pedido.getEstado().toString(),
-                                pedido.getProductos().stream().map(Producto::getId).collect(Collectors.toList()));
+        for (ProductoPedidoDTO producto : pedidoDTO.getProductos()) {
+            if (producto.getCantidad() <= 0) {
+                throw new IllegalArgumentException("La cantidad del producto debe ser mayor a 0");
+            }
         }
-
-        // Método de validación para PedidoDTO
-        private void validarPedidoDTO(PedidoDTO pedidoDTO) {
-                if (pedidoDTO.getClienteId() == null) {
-                        throw new IllegalArgumentException("El ID del cliente no puede ser nulo.");
-                }
-                if (pedidoDTO.getProductosIds() == null || pedidoDTO.getProductosIds().isEmpty()) {
-                        throw new IllegalArgumentException("Debe haber al menos un producto en el pedido.");
-                }
-        }
-
-        // Método para listar todos los pedidos
-        public List<PedidoDTO> listarTodosLosPedidos() {
-                List<Pedido> pedidos = pedidoRepository.findAll();
-
-                if (pedidos.isEmpty()) {
-                        throw new RecursoNoEncontradoException("No hay pedidos registrados.");
-                }
-
-                return pedidos.stream()
-                                .map(pedido -> new PedidoDTO(
-                                                pedido.getId(),
-                                                pedido.getCliente().getId(),
-                                                pedido.getEstado().toString(),
-                                                pedido.getProductos().stream().map(Producto::getId)
-                                                                .collect(Collectors.toList())))
-                                .collect(Collectors.toList());
-        }
-
-        // Método para ver el detalle de un pedido
-        public PedidoDTO verDetallePedido(Long id) {
-                Pedido pedido = pedidoRepository.findById(id)
-                                .orElseThrow(() -> new RecursoNoEncontradoException(
-                                                "Pedido no encontrado con id: " + id));
-
-                return new PedidoDTO(
-                                pedido.getId(),
-                                pedido.getCliente().getId(),
-                                pedido.getEstado().toString(),
-                                pedido.getProductos().stream().map(Producto::getId).collect(Collectors.toList()));
-        }
-
+    }
 }

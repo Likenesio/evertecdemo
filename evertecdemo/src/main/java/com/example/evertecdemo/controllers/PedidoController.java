@@ -12,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pedido")
-@CrossOrigin(origins = "*")
 public class PedidoController {
 
     private final PedidoService pedidoService;
@@ -59,8 +58,8 @@ public class PedidoController {
     }
 
     @DeleteMapping("/{id}/cancelar")
-    public ResponseEntity<Void> cancelarPedido(@PathVariable Long id) {
+    public ResponseEntity<String> cancelarPedido(@PathVariable Long id) {
         pedidoService.cancelarPedido(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Se ha cancelado el pedido con ID: " + id);
     }
 }

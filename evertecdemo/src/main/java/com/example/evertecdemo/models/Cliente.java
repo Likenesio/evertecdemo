@@ -32,7 +32,7 @@ public class Cliente {
     public Cliente() {
     }
 
-    public Cliente(Long id, String nombre, String email, String password, String apellido, String telefono, List<Pedido> pedidos) {
+    public Cliente(Long id, String nombre, String email, String password, String apellido, String telefono, List<Pedido> pedidos) { //constructor
         this.id = id;
         this.nombre = nombre;
         this.email = email;
